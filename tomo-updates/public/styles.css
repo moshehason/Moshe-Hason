@@ -1,0 +1,257 @@
+/* 117 — "anon" design: hero + editorial index + per-work detail pages.
+   Ported from 117-anon.html; data comes from script.js (API/works.js). */
+
+:root{
+  color-scheme:light only;
+  --bg:#FFFFFF;
+  --ink:#0A0A0A;
+  --muted:#8A8A8A;
+  --line:#EBEAE6;
+  --rust:#C25A33;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+[hidden]{display:none !important;}
+html{background:#fff;scroll-behavior:smooth;-webkit-text-size-adjust:100%;text-size-adjust:100%;}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;
+  -webkit-font-smoothing:antialiased;
+  font-size:15px;
+  /* kill double-tap zoom + the 300ms tap delay (the "stuck zoom" culprit);
+     pinch-to-zoom into the artwork still works */
+  touch-action:manipulation;
+}
+a{color:inherit;text-decoration:none;}
+::selection{background:var(--rust);color:#fff;}
+img{max-width:100%;}
+
+/* ---------- HEADER ---------- */
+header{
+  position:sticky;top:0;z-index:200;
+  background:rgba(255,255,255,0.92);
+  backdrop-filter:blur(6px);
+  -webkit-backdrop-filter:blur(6px);
+  display:flex;justify-content:space-between;align-items:center;
+  padding:20px 5vw;
+  border-bottom:1px solid var(--line);
+}
+header .logo{font-size:20px;font-weight:700;letter-spacing:-0.01em;}
+header nav{display:flex;gap:26px;font-size:13px;}
+header nav a{opacity:0.7;transition:opacity .2s;}
+header nav a:hover, header nav a.active{opacity:1;}
+
+/* ---------- HERO SPLASH ---------- */
+#hero{
+  min-height:78svh;
+  display:flex;align-items:center;justify-content:center;
+  border-bottom:1px solid var(--line);
+  /* the glitch canvas is sized 2.4x the letters and centered, so it spills
+     past the viewport edge and used to widen the page (~21px) — which made
+     mobile pinch-zoom feel "stuck". Clip it to the hero box; the spill past
+     the letters (the intended effect) still shows, only off-screen is cut. */
+  overflow:hidden;
+  position:relative;
+}
+.hero-wrap{
+  position:relative;display:inline-block;cursor:pointer;
+  transition:transform 1.1s cubic-bezier(.3,.7,.2,1);
+  will-change:transform;
+}
+.hero-wrap .hero-num{
+  font-size:clamp(110px,26vw,340px);
+  font-weight:700;letter-spacing:-0.03em;line-height:0.85;
+  color:var(--ink);
+  display:block;
+  transition:opacity .04s linear;
+}
+.hero-wrap canvas{
+  position:absolute;
+  left:50%;top:50%;
+  transform:translate(-50%,-50%);
+  opacity:0;pointer-events:none;
+}
+.hero-wrap.glitching .hero-num{opacity:0;}
+.hero-wrap.glitching canvas{opacity:1;}
+
+/* ---------- WORK INDEX ---------- */
+#work-view{max-width:1200px;margin:0 auto;padding:0 5vw;}
+.row{
+  display:grid;grid-template-columns:220px 1fr;gap:40px;
+  padding:70px 0;border-bottom:1px solid var(--line);
+  align-items:start;
+}
+.row:first-child{padding-top:56px;}
+.row-text{position:sticky;top:110px;}
+.row-title{font-size:26px;font-weight:700;letter-spacing:-0.01em;}
+.row-year{margin-top:4px;font-size:13px;color:var(--muted);}
+.row-mat{margin-top:16px;font-size:13px;line-height:1.6;color:#444;max-width:180px;}
+.row-dim{margin-top:12px;font-size:13px;color:var(--muted);}
+.row-price{margin-top:12px;font-size:12px;letter-spacing:0.05em;text-transform:uppercase;color:var(--muted);}
+.row-price.sold{color:var(--ink);font-weight:700;}
+.row-thumb{
+  cursor:pointer;overflow:hidden;background:#F7F6F3;
+  display:flex;align-items:center;justify-content:center;
+}
+.row-thumb img{width:100%;height:auto;display:block;transition:transform .8s cubic-bezier(.2,.7,.2,1);}
+.row-thumb:hover img{transform:scale(1.02);}
+
+@media(max-width:720px){
+  .row{grid-template-columns:1fr;gap:14px;padding:36px 0;}
+  .row-text{position:static;}
+  #work-view{padding:0;}
+  .row{padding-left:5vw;padding-right:5vw;}
+  .row-thumb{margin:0 -5vw;width:100vw;}
+}
+
+/* ---------- DETAIL VIEW ---------- */
+#detail-view{
+  display:none;
+  max-width:900px;margin:0 auto;padding:50px 5vw 100px;
+}
+#detail-view.open{display:block;}
+#work-view.hidden{display:none;}
+
+.d-nav{display:flex;gap:22px;margin-bottom:34px;}
+.d-home, .d-back{display:inline-block;font-size:13px;color:var(--muted);}
+.d-home:hover, .d-back:hover{color:var(--ink);}
+#diary-view > .d-back{display:inline-block;margin-bottom:34px;}
+.d-title{font-size:32px;font-weight:700;letter-spacing:-0.01em;}
+.d-year{margin-top:6px;font-size:13px;color:var(--muted);}
+.d-mat{margin-top:20px;font-size:15px;line-height:1.7;color:#333;max-width:440px;}
+.d-dim{margin-top:14px;font-size:13px;color:var(--muted);}
+.d-price{margin-top:14px;font-size:13px;color:var(--muted);}
+.d-price.sold{color:var(--ink);font-weight:700;letter-spacing:0.05em;text-transform:uppercase;}
+.d-price a{color:var(--rust);}
+.d-price a:hover{text-decoration:underline;}
+
+/* the big duplicate image is hidden on the detail page — the index already
+   shows the full work; the detail page is title, process and close-ups */
+.d-hero{display:none;}
+.d-hero img{width:100%;display:block;}
+
+@media(max-width:720px){
+  #detail-view{padding-left:0;padding-right:0;}
+  .d-nav, .d-title, .d-year, .d-mat, .d-dim, .d-price, .d-section-label, .d-footer{margin-left:max(24px,7vw);margin-right:max(24px,7vw);}
+  .d-hero{margin-left:0;margin-right:0;}
+  .d-video, .d-details-grid{margin-left:5vw;margin-right:5vw;}
+}
+
+.d-section-label{
+  margin-top:56px;margin-bottom:20px;font-size:11px;letter-spacing:0.16em;text-transform:uppercase;color:var(--muted);
+  padding-top:26px;border-top:1px solid var(--line);
+}
+
+.d-video{
+  position:relative;background:#111;aspect-ratio:16/10;
+  display:flex;align-items:center;justify-content:center;
+  overflow:hidden;
+}
+.d-video video{width:100%;height:100%;object-fit:cover;display:block;background:#000;}
+.d-video + .d-video{margin-top:10px;}
+
+.d-details-grid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:10px;
+}
+.d-details-grid .dcrop{
+  aspect-ratio:1/1;overflow:hidden;background:#F7F6F3;position:relative;cursor:pointer;
+}
+.d-details-grid .dcrop img{width:100%;height:100%;object-fit:cover;}
+
+/* ---------- LIGHTBOX (tap a process/diary photo to see it full) ---------- */
+#lightbox{
+  position:fixed;inset:0;z-index:300;display:none;
+  background:rgba(8,8,8,0.96);
+  align-items:center;justify-content:center;
+}
+#lightbox.open{display:flex;}
+#lightbox img{max-width:100vw;max-height:100svh;object-fit:contain;display:block;}
+#lightbox .lb-close{
+  position:absolute;top:10px;right:14px;z-index:1;
+  background:none;border:none;padding:8px;line-height:1;cursor:pointer;
+  font-size:32px;color:#fff;opacity:0.7;
+}
+#lightbox .lb-close:hover{opacity:1;}
+.diary-item img{cursor:pointer;}
+
+.d-footer{
+  margin-top:70px;padding-top:22px;border-top:1px solid var(--line);
+  display:flex;justify-content:space-between;font-size:12px;color:var(--muted);
+  flex-wrap:wrap;gap:14px;
+}
+.d-footer .links{display:flex;gap:18px;}
+.d-footer a:hover{color:var(--ink);}
+
+@media(max-width:600px){
+  .d-details-grid{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ---------- DIARY (full page view) ---------- */
+#diary-view{
+  display:none;
+  max-width:1200px;margin:0 auto;padding:50px 5vw 100px;
+}
+#diary-view.open{display:block;}
+.diary-empty{margin-top:44px;font-size:14px;color:var(--muted);}
+.diary-title{font-size:32px;font-weight:700;letter-spacing:-0.01em;}
+.diary-sub{margin-top:6px;font-size:13px;color:var(--muted);}
+.diary-grid{margin-top:40px;columns:3;column-gap:14px;}
+.diary-item{break-inside:avoid;margin-bottom:14px;background:#F7F6F3;}
+.diary-item img{width:100%;display:block;}
+.diary-cap{padding:10px 12px 4px;font-size:12.5px;line-height:1.5;color:#444;}
+.diary-date{padding:4px 12px 12px;font-size:11px;color:var(--muted);letter-spacing:0.05em;}
+@media(max-width:900px){.diary-grid{columns:2;}}
+
+/* ---------- INFO ---------- */
+#info{
+  max-width:900px;margin:0 auto;padding:100px 5vw 120px;
+  border-top:1px solid var(--line);
+}
+.info-num{font-size:56px;font-weight:700;letter-spacing:-0.02em;}
+.info-sub{
+  margin-top:14px;
+  font-family:'IM Fell English',serif;font-style:italic;
+  font-size:16px;letter-spacing:0.04em;color:var(--muted);
+}
+.info-why{
+  margin-top:16px;max-width:600px;
+  font-family:'IM Fell English',serif;font-style:italic;
+  font-size:21px;line-height:1.9;color:#2a2a2a;
+}
+/* the bio reads like an old storybook */
+.info-bio{
+  margin-top:56px;max-width:600px;
+  font-family:'IM Fell English',serif;font-style:italic;
+  font-size:20px;line-height:1.9;color:#2a2a2a;
+}
+.info-bio p + p{margin-top:20px;}
+.info-contact{margin-top:44px;font-size:14px;}
+.info-contact a{display:block;}
+.info-contact a + a{margin-top:8px;text-decoration:underline;}
+
+/* 80s digital glitch bird — fixed overlay, visible in any view */
+.pixel-bird{
+  position:fixed;left:-40px;width:44px;height:28px;z-index:9999;
+  pointer-events:none;image-rendering:pixelated;
+  filter:drop-shadow(0 0 2px rgba(0,0,0,0.35));
+  animation-timing-function:linear;animation-fill-mode:forwards;
+  animation-duration:var(--fly-duration,6000ms);
+}
+.pixel-bird.fly-right{animation-name:bird-fly-right;}
+.pixel-bird.fly-left{left:auto;right:-40px;animation-name:bird-fly-left;}
+.pixel-bird-svg{width:100%;height:100%;shape-rendering:crispEdges;}
+.pixel-bird-svg rect{fill:var(--ink);}
+@keyframes bird-fly-right{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(calc(100vw + 80px));}
+}
+@keyframes bird-fly-left{
+  0%{transform:translateX(0);}
+  100%{transform:translateX(calc(-100vw - 80px));}
+}
+.pixel-bird.fly-left .pixel-bird-svg{transform:scaleX(-1);}
+.pixel-bird.bird-glitch{
+  filter:drop-shadow(2px 0 0 #C25A33) drop-shadow(-2px 0 0 #3a8fb7) drop-shadow(0 0 2px rgba(0,0,0,0.35));
+  opacity:0.6;
+}
+.pixel-bird.bird-glitch .pixel-bird-svg{transform:translateX(2px) skewX(6deg);}
+.pixel-bird.fly-left.bird-glitch .pixel-bird-svg{transform:scaleX(-1) translateX(2px) skewX(6deg);}
